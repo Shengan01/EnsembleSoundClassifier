@@ -67,7 +67,7 @@ class PostgresDBHandler:
                 "featureTypeID": row[0],
                 "name": row[1],
                 "description": row[2],
-                "parameters": json.loads(row[3]) if row[3] else {}
+                "parameters": row[3] if row[3] else {}
             }
             for row in self.fetchall()
         ]
