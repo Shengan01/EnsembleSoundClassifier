@@ -1,0 +1,9 @@
+.ipynb_checkpoints
+good-sounds
+processed_data
+intermediate_results
+processed_metadata.csv
+*.h5
+__pycache__
+models
+temp_audio_file.wav
