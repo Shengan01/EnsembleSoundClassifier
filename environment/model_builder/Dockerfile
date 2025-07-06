@@ -15,9 +15,22 @@ RUN apt-get update && \
 ENV PATH /opt/conda/bin:$PATH
 
 # Create a new conda environment and install the required packages
-RUN conda create -n myenv -y -c conda-forge  python=3.9.19 jupyter=1.1.1 librosa=0.10.2.post1 tensorflow-gpu=2.4.1  keras=2.4.3 python-dotenv=1.0.1 psycopg2=2.9.9 numpy=1.22.4 pandas=2.2.3 matplotlib=3.8.4 seaborn=0.13.2 ipykernel=6.29.5 &&\
-    conda clean --all -f -y
-
+RUN conda create -n myenv -y -c conda-forge \
+    python=3.9.19 \
+    jupyter=1.1.1 \
+    librosa=0.10.2.post1 \
+    tensorflow-gpu=2.4.1 \
+    keras=2.4.3 \
+    python-dotenv=1.0.1 \
+    psycopg2=2.9.9 \
+    numpy=1.22.4 \
+    pandas=2.2.3 \
+    matplotlib=3.8.4 \
+    seaborn=0.13.2 \
+    ipykernel=6.29.5 \
+    scikit-learn=1.3.0 \
+    joblib=1.3.0 \
+    && conda clean --all -f -y
 
 # Activate the conda environment and ensure it is used with Jupyter Notebook
 RUN echo "source activate myenv" > ~/.bashrc
