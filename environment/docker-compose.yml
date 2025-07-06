@@ -1,0 +1,58 @@
+services:
+  model_builder:
+    build:
+      context: .
+      dockerfile: model_builder/Dockerfile
+    image: model_builder
+    ports:
+      - "8888:8888"
+    networks:
+      - project_network
+    privileged: true 
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    volumes:
+      - ./../:/instrument_classifier
+
+  postgres:
+    image: postgres:latest
+    container_name: postgres_server
+    environment:
+      POSTGRES_DB: mydatabase
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+    ports:
+      - "5433:5433" # zmienione bo lokalnie postgre uzywa portu 5432
+    networks:
+      - project_network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sqlServer/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  instrument_classifier:
+      build:
+        context: .
+        dockerfile: instrument_classifier/Dockerfile
+      image: instrument_classifier
+      ports:
+        - "8000:8000"
+      networks:
+        - project_network
+      volumes:
+        - ./../InstrumentClassification:/InstrumentClassification
+
+
+volumes:
+  postgres_data:
+
+
+networks:
+  project_network:
+    driver: bridge
