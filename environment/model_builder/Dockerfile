@@ -18,7 +18,7 @@ ENV PATH /opt/conda/bin:$PATH
 RUN conda create -n myenv -y -c conda-forge \
     python=3.9.19 \
     jupyter=1.1.1 \
-    librosa=0.10.2.post1 \
+    librosa=0.11.0 \
     tensorflow-gpu=2.4.1 \
     keras=2.4.3 \
     python-dotenv=1.0.1 \
