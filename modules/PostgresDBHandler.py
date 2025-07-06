@@ -1,5 +1,6 @@
 import pandas as pd
 import psycopg2
+import json
 
 
 class PostgresDBHandler:
@@ -50,6 +51,33 @@ class PostgresDBHandler:
             # print("Connection closed")
         except Exception as e:
             print(f"An error occurred while closing the connection: {e}")
+
+    # FeatureTypes
+    def get_feature_type_id(self, name):
+        query = "SELECT featureTypeID FROM FeatureTypes WHERE name = %s"
+        self.execute_query(query, (name,))
+        result = self.fetchone()
+        return result[0] if result else None
+
+    def get_all_feature_types(self):
+        query = "SELECT featureTypeID, name, description, parameters FROM FeatureTypes"
+        self.execute_query(query)
+        return [
+            {
+                "featureTypeID": row[0],
+                "name": row[1],
+                "description": row[2],
+                "parameters": json.loads(row[3]) if row[3] else {}
+            }
+            for row in self.fetchall()
+        ]
+
+    def insert_feature_type(self, name, description, parameters=None):
+        if parameters is None:
+            parameters = {}
+        query = "INSERT INTO FeatureTypes (name, description, parameters) VALUES (%s, %s, %s) RETURNING featureTypeID"
+        self.execute_query(query, (name, description, json.dumps(parameters)))
+        return self.fetchone()[0]
 
     # Instruments
     def get_instrument_id(self, name):
@@ -140,20 +168,20 @@ class PostgresDBHandler:
         self.execute_query(query, (filePath,))
         return self.fetchone() is not None
 
-    # Processed
+    # Processed - Updated for multiple feature types
     def insert_processed_audio(
         self,
         instrumentID,
         audioID,
         fixedLength,
-        spectrogramPath,
-        mfccPath,
+        featureTypeID,
+        featurePath,
         augmentation,
     ):
         query = """
-        INSERT INTO Processed (instrumentID, audioID, fixedLength, spectrogramPath, mfccPath, augmentation)
+        INSERT INTO Processed (instrumentID, audioID, fixedLength, featureTypeID, featurePath, augmentation)
         VALUES (%s, %s, %s, %s, %s, %s)
-        RETURNING audioID
+        RETURNING processedID
         """
         self.execute_query(
             query,
@@ -161,8 +189,8 @@ class PostgresDBHandler:
                 instrumentID,
                 audioID,
                 fixedLength,
-                spectrogramPath,
-                mfccPath,
+                featureTypeID,
+                featurePath,
                 augmentation,
             ),
         )
@@ -173,21 +201,42 @@ class PostgresDBHandler:
         self.execute_query(query)
         return [item[0] for item in self.fetchall()]
 
-    def get_processed_fit_data(self, processedIDs):
-        query = "SELECT processedID, spectrogramPath, mfccPath, instrumentID FROM Processed WHERE processedID = ANY(%s)"
-        self.execute_query(query, (processedIDs,))
+    def get_processed_fit_data(self, processedIDs, feature_type_name=None):
+        if feature_type_name:
+            query = """
+            SELECT p.processedID, p.featurePath, p.instrumentID, ft.name as featureTypeName
+            FROM Processed p
+            JOIN FeatureTypes ft ON p.featureTypeID = ft.featureTypeID
+            WHERE p.processedID = ANY(%s) AND ft.name = %s
+            """
+            self.execute_query(query, (processedIDs, feature_type_name))
+        else:
+            query = """
+            SELECT p.processedID, p.featurePath, p.instrumentID, ft.name as featureTypeName
+            FROM Processed p
+            JOIN FeatureTypes ft ON p.featureTypeID = ft.featureTypeID
+            WHERE p.processedID = ANY(%s)
+            """
+            self.execute_query(query, (processedIDs,))
+        
         return [
             {
                 "processedID": item[0],
-                "spectrogramPath": item[1],
-                "mfccPath": item[2],
-                "instrumentID": item[3],
+                "featurePath": item[1],
+                "instrumentID": item[2],
+                "featureTypeName": item[3],
             }
             for item in self.fetchall()
         ]
 
     def get_processed_audio(self, processedID):
-        query = "SELECT processedID, instrumentID, audioID, fixedLength, spectrogramPath, mfccPath, augmentation FROM Processed WHERE processedID = %s"
+        query = """
+        SELECT p.processedID, p.instrumentID, p.audioID, p.fixedLength, 
+               p.featurePath, p.augmentation, ft.name as featureTypeName
+        FROM Processed p
+        JOIN FeatureTypes ft ON p.featureTypeID = ft.featureTypeID
+        WHERE p.processedID = %s
+        """
         self.execute_query(query, (processedID,))
         result = self.fetchone()
         return {
@@ -195,7 +244,42 @@ class PostgresDBHandler:
             "instrumentID": result[1],
             "audioID": result[2],
             "fixedLength": result[3],
-            "spectrogramPath": result[4],
-            "mfccPath": result[5],
-            "augmentation": result[6],
+            "featurePath": result[4],
+            "augmentation": result[5],
+            "featureTypeName": result[6],
         }
+
+    def get_processed_data_by_feature_type(self, feature_type_name):
+        query = """
+        SELECT p.processedID, p.featurePath, p.instrumentID
+        FROM Processed p
+        JOIN FeatureTypes ft ON p.featureTypeID = ft.featureTypeID
+        WHERE ft.name = %s
+        """
+        self.execute_query(query, (feature_type_name,))
+        return [
+            {
+                "processedID": item[0],
+                "featurePath": item[1],
+                "instrumentID": item[2],
+            }
+            for item in self.fetchall()
+        ]
+
+    def get_all_feature_types_for_audio(self, audioID):
+        query = """
+        SELECT p.processedID, p.featurePath, ft.name as featureTypeName, p.augmentation
+        FROM Processed p
+        JOIN FeatureTypes ft ON p.featureTypeID = ft.featureTypeID
+        WHERE p.audioID = %s
+        """
+        self.execute_query(query, (audioID,))
+        return [
+            {
+                "processedID": item[0],
+                "featurePath": item[1],
+                "featureTypeName": item[2],
+                "augmentation": item[3],
+            }
+            for item in self.fetchall()
+        ]
