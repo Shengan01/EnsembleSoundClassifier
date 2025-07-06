@@ -39,13 +39,13 @@ CREATE TABLE Processed (
 
 -- Insert default feature types
 INSERT INTO FeatureTypes (name, description, parameters) VALUES
-('mel_spectrogram', 'Mel-frequency spectrogram', '{"n_mels": 128, "fmin": 0, "fmax": null}'),
-('mfcc', 'Mel-frequency cepstral coefficients', '{"n_mfcc": 13, "n_mels": 128}'),
-('chromagram', 'Chroma features', '{"n_chroma": 12}'),
-('spectral_contrast', 'Spectral contrast features', '{"n_bands": 6}'),
+('mel_spectrogram', 'Mel-frequency spectrogram', '{"n_mels": 64, "fmin": 0, "fmax": null}'),
+('mfcc', 'Mel-frequency cepstral coefficients', '{"n_mfcc": 8, "n_mels": 64}'),
+('chromagram', 'Chroma features', '{"n_chroma": 8}'),
+('spectral_contrast', 'Spectral contrast features', '{"n_bands": 3}'),
 ('tonnetz', 'Tonal centroid features', '{}'),
-('constant_q', 'Constant-Q transform', '{"bins_per_octave": 12, "n_bins": 84}'),
-('cqt', 'Constant-Q chromagram', '{"bins_per_octave": 12, "n_bins": 84}'),
-('stft', 'Short-time Fourier transform', '{"n_fft": 2048, "hop_length": 512}'),
+('constant_q', 'Constant-Q transform', '{"bins_per_octave": 6, "n_bins": 42}'),
+('cqt', 'Constant-Q chromagram', '{"bins_per_octave": 6, "n_chroma": 42}'),  -- updated this line
+('stft', 'Short-time Fourier transform', '{"n_fft": 512, "hop_length": 256}'),
 ('harmonic_percussive', 'Harmonic-percussive source separation', '{"margin": 3.0}'),
-('onset_strength', 'Onset strength envelope', '{"hop_length": 512}');
+('onset_strength', 'Onset strength envelope', '{"hop_length": 256}');
