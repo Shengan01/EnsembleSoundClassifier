@@ -283,3 +283,8 @@ class PostgresDBHandler:
             }
             for item in self.fetchall()
         ]
+
+    def get_all_unique_audio_ids_in_processed(self):
+        query = "SELECT DISTINCT audioID FROM Processed"
+        self.execute_query(query)
+        return [item[0] for item in self.fetchall()]
