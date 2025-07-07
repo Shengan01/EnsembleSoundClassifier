@@ -1,4 +1,4 @@
-# Use the official Miniconda image as the base image
+# Use the official CUDA 12.2 base image
 FROM nvidia/cuda:12.2.0-devel-ubuntu22.04
 
 # Set the working directory
@@ -14,13 +14,11 @@ RUN apt-get update && \
 # Add Miniconda to the PATH
 ENV PATH /opt/conda/bin:$PATH
 
-# Create a new conda environment and install the required packages
+# Create a new conda environment and install the required packages (excluding tensorflow/keras)
 RUN conda create -n myenv -y -c conda-forge \
     python=3.9.19 \
     jupyter=1.1.1 \
     librosa=0.11.0 \
-    tensorflow-gpu=2.4.1 \
-    keras=2.4.3 \
     python-dotenv=1.0.1 \
     psycopg2=2.9.9 \
     numpy=1.22.4 \
@@ -36,6 +34,10 @@ RUN conda create -n myenv -y -c conda-forge \
 # Activate the conda environment and ensure it is used with Jupyter Notebook
 RUN echo "source activate myenv" > ~/.bashrc
 ENV PATH /opt/conda/envs/myenv/bin:$PATH
+
+# Install TensorFlow 2.15 and Keras 2.15 with pip (for CUDA 12.x support)
+RUN /opt/conda/envs/myenv/bin/pip install --upgrade pip && \
+    /opt/conda/envs/myenv/bin/pip install tensorflow==2.15 keras==2.15
 
 # Expose the Jupyter Notebook port
 EXPOSE 8888
