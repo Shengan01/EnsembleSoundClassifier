@@ -29,6 +29,7 @@ RUN conda create -n myenv -y -c conda-forge \
     scikit-learn=1.3.0 \
     joblib=1.3.0 \
     tqdm=4.67.1 \
+    scipy=1.16.0 \
     && conda clean --all -f -y
 
 # Activate the conda environment and ensure it is used with Jupyter Notebook
